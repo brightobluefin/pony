@@ -4,9 +4,24 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "c7bee9bd54f84cc1d53ec951b6ffb461",
-    "content-hash": "83d7ca2576ea82ef6d1d73e2c60b4e39",
+    "hash": "ba7c76a73eae2ee77ed3fe2ccea95c69",
+    "content-hash": "9d1a92ce014e841080d669e6c7d5a7aa",
     "packages": [
+        {
+            "name": "bluefinenterprises/yahoogemini",
+            "version": "0.0.1",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:bluefinenterprises/yahoo-gemini.git",
+                "reference": "master"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Bluefin\\YahooGemini\\": "src/"
+                }
+            }
+        },
         {
             "name": "classpreloader/classpreloader",
             "version": "3.0.0",
