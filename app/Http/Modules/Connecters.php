@@ -2,94 +2,55 @@
 
 namespace App\Http\Modules;
 
-use Bluefin\YahooGemini\Gemini;
-use Bluefin\YahooGemini\YahooOAuth2;
+use Bluefin\YahooGemini\GeminiAuthManager;
+use GuzzleHttp\Client;
 
-use App\Token;
+
 
 class Connecters
 {
   protected $consumerKey;
   protected $consumerSecret;
   protected $ObjectItem;
+  protected $client;
 
   public function __construct(){
 
     $this->consumerKey = env('CONSUMER_KEY');
     $this->consumerSecret =  env('CONSUMER_SECRET');
-    $this->gn = new Gemini;
+    $this->gm = new GeminiAuthManager;
+    $this->client = new Client;
   }
-  public function saveToken($token)
-  {
-    $tokens = empty(Token::first())? new Token:Token::first();
 
-    $tokens->access_token = $token->access_token;
-    $tokens->refresh_token = $token->refresh_token;
-    $tokens->expires_in = date("H:i:s", $token->expires_in + strtotime(date('H:i:s',  time())));
-
-    $tokens->save();
-  }
-  public function getToken($location)
-  {
-    return $this->gn->newToken($this->consumerKey, $this->consumerSecret, $location);
-  }
-  public function getAccessToken()
-  {
-    return Token::first()->access_token;
-  }
-  public function getRefreshToken()
-  {
-    return Token::first()->refresh_token;
-  }
-  public function getExpiry()
-  {
-    return Token::first()->expires_in;
-  }
-  public function updateToken()
-  {
-    $yah = new YahooOAuth2;
-    $refreshToken = $this->getRefreshToken();
-    $redirect_uri = " ";
-
-    return $yah->update_access_token($this->consumerKey, $this->consumerSecret, $redirect_uri, $refreshToken);
-  }
-  public function checkTokenExpiry()
-  {
-    if((strtotime(date('H:i:s',  time())) + 600)> strtotime($this->getExpiry()))
-    {
-      $tokens = $this->updateToken();
-      $this->saveToken($tokens);
-    }
-  }
-  public function getRequest($client, $object, $parameter)
+  public function getRequest( $object, $parameter)
    {
     //  echo 'https://api.gemini.yahoo.com/v2/rest/'.$object.'/'.$parameter;
      $index = 500;
-     $itemsCount = $this->getResponse($client, $object, 'count'.$parameter);
-     $result = $this->getResponse($client, $object, $parameter);
+     $itemsCount = $this->getResponse( $object, 'count'.$parameter);
+     $result = $this->getResponse( $object, $parameter);
 
      while ($index<$itemsCount)
      {
-       $result = array_merge($result, $this->getResponse($client, $object, $parameter,'&si='.$index));
+       $result = array_merge($result, $this->getResponse( $object, $parameter,'&si='.$index));
        $index+=500;
      }
      return $result;
    }
 
-  private function getResponse($client, $object, $parameter, $index='')
+  private function getResponse( $object, $parameter, $index='')
     {
-      $token = $this->getAccessToken();
-      $response  = $client->request('GET', 'https://api.gemini.yahoo.com/v2/rest/'.$object.'/'.$parameter.$index,
+      $token = $this->gm->getAccessToken();
+      $response  = $this->client->request('GET', 'https://api.gemini.yahoo.com/v2/rest/'.$object.'/'.$parameter.$index,
       [
         'headers'  => ['Authorization' =>'Bearer '.$token]
       ]);
       return json_decode($response->getBody())->response;
     }
 
-   public function putRequest($client,$object,$parameter)
+   public function putRequest($object,$parameter)
    {
-     $token = $this->getAccessToken();
-     $response  = $client->request('PUT', 'https://api.gemini.yahoo.com/v2/rest/campaign',
+     $token = $this->gm->getAccessToken();
+     $response  = $this->client->request('PUT', 'https://api.gemini.yahoo.com/v2/rest/campaign',
      [
        'headers'  => ['Authorization' =>'Bearer '.$token],
        'json'  => [
@@ -100,11 +61,11 @@ class Connecters
      return '<pre>'.print_r(json_decode($response->getBody()),  true).'</pre>';
    }
 
-   function deleteRequest($client, $object, $items)
+   function deleteRequest( $object, $items)
    {
-     $token = $this->getAccessToken();
+     $token = $this->gm->getAccessToken();
      foreach ($items as $item) {
-       $response  = $client->request('PUT', 'https://api.gemini.yahoo.com/v2/rest/'.$object,
+       $response  = $this->client->request('PUT', 'https://api.gemini.yahoo.com/v2/rest/'.$object,
        [
          'headers'  => ['Authorization' =>'Bearer '.$token],
          'json'  => [
@@ -116,18 +77,18 @@ class Connecters
      return '<pre>'.print_r(json_decode($response->getBody()),  true).'</pre>';
    }
 
-   function postRequest($client, $object, $items, $id)
+   function postRequest( $object, $items, $id)
    {
-     $token = $this->getAccessToken();
-     $this->saveObjectItem($client, $object, $id);
+     $token = $this->gm->getAccessToken();
+     $this->saveObjectItem( $object, $id);
      switch($object)
      {
        case 'campaign':
         foreach($items as $item)
           {
-            if($this->itemExist($client, $item->campaignName, $object, $id, 'campaignName'))
+            if($this->itemExist( $item->campaignName, $object, $id, 'campaignName'))
             {
-              $response  = $client->request('POST', 'https://api.gemini.yahoo.com/v2/rest/'.$object,
+              $response  = $this->client->request('POST', 'https://api.gemini.yahoo.com/v2/rest/'.$object,
               [
                 'headers'  => ['Authorization' =>'Bearer '.$token],
                 'json'  => [
@@ -151,9 +112,9 @@ class Connecters
      case 'adgroup':
       $bidSet  =  new \stdClass;
       $bid  =  new \stdClass;
-      $this->saveObjectItem($client, 'campaign', '1494748');
+      $this->saveObjectItem( 'campaign', '1494748');
       //TODO
-      $this->saveObjectItem($client, 'campaign', $id);
+      $this->saveObjectItem( 'campaign', $id);
       foreach($items as $item)
         {
            $itemBids = $item->bidSet->bids[0];
@@ -161,10 +122,10 @@ class Connecters
            $bid->value  =  $itemBids->value;
            $bid->channel  =  $itemBids->channel;
            $bidSet->bids  =  [ $bid ];
-           $campaignId = $this->getId('campaign', 'campaignName', $item->campaignId, $id);
+           $campaignId = $this->getObject('campaign', 'campaignName', $item->campaignId, $id)->id;
 
-           if(!empty($campaignId)&& $this->itemExist($client, $item->adGroupName, $object, $id, 'adGroupName')){
-             $response  = $client->request('POST', 'https://api.gemini.yahoo.com/v2/rest/'.$object,
+           if(!empty($campaignId)&& $this->itemExist( $item->adGroupName, $object, $id, 'adGroupName')){
+             $response  = $this->client->request('POST', 'https://api.gemini.yahoo.com/v2/rest/'.$object,
              [
                'headers'  => ['Authorization' =>'Bearer '.$token],
                'json'  => [
@@ -184,20 +145,18 @@ class Connecters
          break;
 
      case 'ad':
-         $this->saveObjectItem($client, 'campaign', '1494748');
+         $this->saveObjectItem( 'adgroup', '1494748');
          //TODO
-         $this->saveObjectItem($client, 'campaign', $id);
-         $this->saveObjectItem($client, 'adgroup', '1494748');
-         //TODO
-         $this->saveObjectItem($client, 'adgroup', $id);
+         $this->saveObjectItem( 'adgroup', $id);
         foreach($items as $item)
         {
-          $item=$items[0];
-          $campaignId = $this->getId('campaign', 'campaignName', $item->campaignId, $id);
-          $adGroupId = $this->getId('adgroup', 'adGroupName', $item->adGroupId, $id);
-          if(!empty($adGroupId) && !empty($campaignId) && $this->itemExist($client, $item->title, $object, $id, 'title'))
+        $item=$items[0];
+          $obj=$this->getObject('adgroup', 'adGroupName', $item->adGroupId, $id);
+          $campaignId = $obj->campaignId;
+          $adGroupId = $obj->id;
+          if(!empty($adGroupId) && !empty($campaignId) && $this->itemExist( $item->title, $object, $id, 'title'))
           {
-            $response  = $client->request('POST', 'https://api.gemini.yahoo.com/v2/rest/'.$object,
+            $response  = $this->client->request('POST', 'https://api.gemini.yahoo.com/v2/rest/'.$object,
             [
               'headers'  => ['Authorization' =>'Bearer '.$token],
               'json'  => [
@@ -221,9 +180,9 @@ class Connecters
      case 'keyword':
       $bidSet  =  new \stdClass;
       $bid  =  new \stdClass;
-      $this->saveObjectItem($client, 'adgroup', '1494748');
+      $this->saveObjectItem( 'adgroup', '1494748');
       //TODO
-      $this->saveObjectItem($client, 'adgroup', $id);
+      $this->saveObjectItem( 'adgroup', $id);
       foreach($items as $item)
         {
           $itemBids = $item->bidSet->bids[0];
@@ -231,34 +190,33 @@ class Connecters
           $bid->value  =  $itemBids->value;
           $bid->channel  =  $itemBids->channel;
           $bidSet->bids  =  [ $bid ];
-          $parentId = $this->getId('adgroup', 'adGroupName', $item->parentId, $id);
-          if(empty($parentId)){
-            echo "Make sure all Ad groups are synced!";
-            break;
+          $parentId = $this->getObject('adgroup', 'adGroupName', $item->parentId, $id)->id;
+          if(!empty($parentId) && $this->itemExist( $item->value, $object, $id, 'value'))
+          {
+            $response  = $this->client->request('POST', 'https://api.gemini.yahoo.com/v2/rest/'.$object,
+            [
+              'headers'  => ['Authorization' =>'Bearer '.$token],
+              'json'  => [
+                    "advertiserId" => $id,
+                    "parentType" =>  'ADGROUP',
+                    "parentId" =>$parentId ,
+                    "value" => $item->value,
+                    "matchType" =>$item->matchType,
+                    "exclude" =>$item->exclude,
+                    "status" =>$item->status,
+                    "bidSet" => $bidSet
+              ]
+             ]);
           }
-         $response  = $client->request('POST', 'https://api.gemini.yahoo.com/v2/rest/'.$object,
-         [
-           'headers'  => ['Authorization' =>'Bearer '.$token],
-           'json'  => [
-                 "advertiserId" => $id,
-                 "parentType" =>  'ADGROUP',
-                 "parentId" =>$parentId ,
-                 "value" => $item->value,
-                 "matchType" =>$item->matchType,
-                 "exclude" =>$item->exclude,
-                 "status" =>$item->status,
-                 "bidSet" => $bidSet
-           ]
-          ]);
        }
        break;
      }
     //  return '<pre>'.print_r(json_decode($response->getBody()),  true).'</pre>';
    }
 
-   public function saveObjectItem($client, $object, $id)
+   public function saveObjectItem( $object, $id)
    {
-     $this->ObjectItem[$object][$id]  =  $this->getRequest($client,  $object, '?advertiserId='.$id);
+     $this->ObjectItem[$object][$id]  =  $this->getRequest(  $object, '?advertiserId='.$id);
    }
 
    public function getObjectItem($object, $id)
@@ -266,9 +224,9 @@ class Connecters
      return $this->ObjectItem[$object][$id];
    }
 
-   public function getId($object, $name, $itemId, $id)
+   public function getObject($object, $name, $itemId, $id)
    {
-     $Id = "";
+     $obj = "";
      $sourceItem = $this->getObjectItem($object, '1494748');
      //TODO
      $item = $this->getObjectItem($object, $id);
@@ -278,14 +236,13 @@ class Connecters
      });
      if(!empty($itemName)) $itemName  =  end($itemName)->$name;
 
-     $Id = array_filter($item, function($item)use($itemName, $name){
+     $obj = array_filter($item, function($item)use($itemName, $name){
        return $item->$name == $itemName;
      });
-    if(!empty($Id)) $Id  =  end($Id)->id;
-    return $Id;
+    if(!empty($obj)) return end($obj);
    }
 
-   public function itemExist($client, $itemName , $object, $id, $name)
+   public function itemExist( $itemName , $object, $id, $name)
    {
      $item = $this->getObjectItem($object, $id);
 

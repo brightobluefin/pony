@@ -5,39 +5,58 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-use GuzzleHttp\Client;
 
 use App\Http\Requests;
 use App\Http\Modules\Connecters;
+use App\Jobs\Sync;
+use Bluefin\YahooGemini\GeminiAuthManager;
 
 class PageController extends Controller
 {
     //
     public function home(Connecters $cn){
-        $cn->checkTokenExpiry();
-        $client = new Client();
+      $gm = new GeminiAuthManager();
+      $gm->checkTokenExpiry();
+
         $object='advertiser';
         $id='';
         return view('default', [
-          'requests' => $cn->getRequest($client,$object,$id),
+          'requests' => $cn->getRequest($object,$id),
           'title' => 'Home Page'
         ]);
     }
     public function sync($id,$object,Connecters $cn){
-      $cn->checkTokenExpiry();
-      $client = new Client();
+      $gm = new GeminiAuthManager();
+      $gm->checkTokenExpiry();
+
       $parameter="?advertiserId=1494748";
       //TODO
-      $items=$cn->getRequest($client,$object,$parameter);
-      $cn->postRequest($client,$object,$items,$id);
+      if($object=='keyword')
+      {
+        $adGroup=$cn->getRequest('adgroup','?advertiserId=1494748');
+        $items=[];
+        foreach ($adGroup as $adGroups)
+        {
+          $items = array_merge($items,$cn->getRequest($object,"?parentId=".$adGroups->id."&parentType=ADGROUP"));
+        }
+
+      }
+      else
+      {
+        $items = $cn->getRequest($object,$parameter);
+      }
+      return '<pre>'.print_r($items, true).'</pre>';
+      $cn->postRequest($object,$items,$id);
       return "Sync completed";
     }
     public function delete($id,$object,Connecters $cn){
-      $cn->checkTokenExpiry();
-      $client = new Client();
+      $gm = new GeminiAuthManager();
+      $gm->checkTokenExpiry();
+
       $parameter="?advertiserId=".$id;
-      $items=$cn->getRequest($client,$object,$parameter);
-      return $cn->deleteRequest($client,$object,$items);
+      $items=$cn->getRequest($object,$parameter);
+      $cn->deleteRequest($object,$items);
+      return "All items are deleted";
     }
     public function objects($id,Connecters $cn){
       return view('objects',[
@@ -45,35 +64,36 @@ class PageController extends Controller
         'id'=>$id
       ]);
     }
-    public function new(Connecters $cn) {
-      $tokens=$cn->getToken('new');
-      $cn->saveToken($tokens);
+    public function new(GeminiAuthManager $gm) {
+      $tokens=$gm->newAccessToken('new');
+      $gm->saveToken($tokens);
 
       return view('token',[
         "title"=> 'New Token Created',
-        "expiry"=>$cn->getExpiry()
+        "expiry"=>$gm->getExpiry()
       ]);
     }
-    public function update(Connecters $cn)
+    public function update(GeminiAuthManager $gm)
     {
-      $tokens=$cn->updateToken();
-      $cn->saveToken($tokens);
+      $tokens=$gm->updateAccessToken();
+      $gm->saveToken($tokens);
 
       return view('token',[
         "title"=> 'Token updated',
-        "expiry"=>$cn->getExpiry()
+        "expiry"=>$gm->getExpiry()
       ]);
     }
     public function test(Connecters $cn,$object='campaign',$id=1494748) {
-      $cn->checkTokenExpiry();
-      $client = new Client();
+      $gm = new GeminiAuthManager();
+      $gm->checkTokenExpiry();
+
       $parameter="?advertiserId=".$id;
       // $parameter=$id;
       if($object=='keyword')
       {
         $parameter="?parentId=".$id."&parentType=ADGROUP";
       }
-      $items=$cn->getRequest($client,$object,$parameter);
+      $items=$cn->getRequest($object,$parameter);
       return '<pre>'.print_r($items, true).'</pre>';
     }
 }
