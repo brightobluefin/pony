@@ -9,7 +9,7 @@
           "type": "package",
           "package": {
               "name": "bluefinenterprises/yahoogemini",
-              "version": "0.0.1",
+              "version": "0.0.3",
               "source": {
                   "url": "git@github.com:bluefinenterprises/yahoo-gemini.git",
                   "type": "git",
@@ -26,7 +26,7 @@
     "require": {
         "php": ">=5.6.4",
         "laravel/framework": "5.3.*",
-        "bluefinenterprises/yahoogemini": "^0.0.1"
+        "bluefinenterprises/yahoogemini": "0.0.*"
     },
     "require-dev": {
       "guzzlehttp/guzzle": "^6.0",

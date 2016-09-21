@@ -10,90 +10,81 @@ use App\Http\Requests;
 use App\Http\Modules\Connecters;
 use App\Jobs\Sync;
 use Bluefin\YahooGemini\GeminiAuthManager;
+use Bluefin\YahooGemini\Gemini;
+use Artisan;
 
 class PageController extends Controller
 {
     //
-    public function home(Connecters $cn){
-      $gm = new GeminiAuthManager();
-      $gm->checkTokenExpiry();
+    public function home(){
+      $gmAuth = new GeminiAuthManager();
+      $gmAuth->checkTokenExpiry();
+      $gm = new Gemini($gmAuth->getAccessToken());
 
-        $object='advertiser';
-        $id='';
         return view('default', [
-          'requests' => $cn->getRequest($object,$id),
+          'requests' => $gm->getData('advertiser'),
           'title' => 'Home Page'
         ]);
     }
-    public function sync($id,$object,Connecters $cn){
-      $gm = new GeminiAuthManager();
-      $gm->checkTokenExpiry();
+    public function sync($advertiserId,$object){
+      $sourceId = '1499756';
 
-      $parameter="?advertiserId=1494748";
-      //TODO
-      if($object=='keyword')
-      {
-        $adGroup=$cn->getRequest('adgroup','?advertiserId=1494748');
-        $items=[];
-        foreach ($adGroup as $adGroups)
-        {
-          $items = array_merge($items,$cn->getRequest($object,"?parentId=".$adGroups->id."&parentType=ADGROUP"));
-        }
+      // $gmAuth = new GeminiAuthManager();
+      // $gmAuth->checkTokenExpiry();
+      // $gm = new Gemini($gmAuth->getAccessToken());
+      Artisan::call('command:sync', [
+        'object' => $object,
+        'sourceId' => $sourceId,
+        'advertiserId' => $advertiserId
+      ]);
 
-      }
-      else
-      {
-        $items = $cn->getRequest($object,$parameter);
-      }
-      return '<pre>'.print_r($items, true).'</pre>';
-      $cn->postRequest($object,$items,$id);
       return "Sync completed";
     }
-    public function delete($id,$object,Connecters $cn){
-      $gm = new GeminiAuthManager();
-      $gm->checkTokenExpiry();
+    public function delete($advertiserId, $object, GeminiAuthManager $gmAuth){
+      // $gmAuth->checkTokenExpiry();
+      // $gm = new Gemini($gmAuth->getAccessToken());
+      // $gm->delete($object, $advertiserId);
+      // $gm->sync($object, $sourceId, $advertiserId);
 
-      $parameter="?advertiserId=".$id;
-      $items=$cn->getRequest($object,$parameter);
-      $cn->deleteRequest($object,$items);
+      Artisan::call('command:delete', [
+        'object' => $object,
+        'advertiserId' => $advertiserId
+      ]);
+
       return "All items are deleted";
     }
-    public function objects($id,Connecters $cn){
+    public function objects($id){
       return view('objects',[
         'title' => 'Objects',
         'id'=>$id
       ]);
     }
-    public function new(GeminiAuthManager $gm) {
-      $tokens=$gm->newAccessToken('new');
-      $gm->saveToken($tokens);
+    public function new(GeminiAuthManager $gmAuth) {
+      $tokens=$gmAuth->newAccessToken('new');
+      $gmAuth->saveToken($tokens);
 
       return view('token',[
         "title"=> 'New Token Created',
-        "expiry"=>$gm->getExpiry()
+        "expiry"=>$gmAuth->getExpiry()
       ]);
     }
-    public function update(GeminiAuthManager $gm)
+    public function update(GeminiAuthManager $gmAuth)
     {
-      $tokens=$gm->updateAccessToken();
-      $gm->saveToken($tokens);
+      $tokens = $gmAuth->updateAccessToken();
+      $gmAuth->saveToken($tokens);
 
       return view('token',[
         "title"=> 'Token updated',
-        "expiry"=>$gm->getExpiry()
+        "expiry"=>$gmAuth->getExpiry()
       ]);
     }
-    public function test(Connecters $cn,$object='campaign',$id=1494748) {
-      $gm = new GeminiAuthManager();
-      $gm->checkTokenExpiry();
+    public function test($object='campaign',$advertiserId=1499756) {
+      $gmAuth = new GeminiAuthManager();
+      $gmAuth->checkTokenExpiry();
+      $gm = new Gemini($gmAuth->getAccessToken());
 
-      $parameter="?advertiserId=".$id;
-      // $parameter=$id;
-      if($object=='keyword')
-      {
-        $parameter="?parentId=".$id."&parentType=ADGROUP";
-      }
-      $items=$cn->getRequest($object,$parameter);
+      $items = $gm->getData($object, $advertiserId);
+
       return '<pre>'.print_r($items, true).'</pre>';
     }
 }
