@@ -4,9 +4,24 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "107c012e8788a77b57b07e8e7f121ee3",
-    "content-hash": "dd9517c9c524102de11454615111be6d",
+    "hash": "b7c400cded80c21dce6e013abc3999fa",
+    "content-hash": "f49a11e24c884f61490c9fb61f3aa1ea",
     "packages": [
+        {
+            "name": "bluefinenterprises/checker",
+            "version": "0.1.13",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:bluefinenterprises/Checker.git",
+                "reference": "master"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Bluefin\\Checker\\": "src/"
+                }
+            }
+        },
         {
             "name": "bluefinenterprises/yahoogemini",
             "version": "0.0.3",

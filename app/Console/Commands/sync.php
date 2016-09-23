@@ -30,7 +30,7 @@ class sync extends Command
     public function __construct(GeminiAuthManager $gmAuth)
     {
         parent::__construct();
-        
+
         $gmAuth->checkTokenExpiry();
         $token = $gmAuth->getAccessToken();
         $this->gm = new Gemini($token);

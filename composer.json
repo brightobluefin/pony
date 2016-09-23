@@ -21,12 +21,30 @@
               }
           }
       }
+    },
+    {
+        "type": "package",
+        "package": {
+            "name": "bluefinenterprises/checker",
+            "version": "0.1.13",
+            "source": {
+                "url": "git@github.com:bluefinenterprises/Checker.git",
+                "type": "git",
+                "reference": "master"
+        },
+        "autoload": {
+            "psr-4" : {
+                "Bluefin\\Checker\\": "src/"
+            }
+        }
     }
+  }
   ],
     "require": {
         "php": ">=5.6.4",
         "laravel/framework": "5.3.*",
-        "bluefinenterprises/yahoogemini": "0.0.*"
+        "bluefinenterprises/yahoogemini": "0.0.*",
+        "bluefinenterprises/checker": "0.*.*"
     },
     "require-dev": {
       "guzzlehttp/guzzle": "^6.0",

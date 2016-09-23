@@ -15,7 +15,7 @@ use App\Http\Modules\YahooOAuth2;
 
 
 Route::get('/','PageController@home');
-Route::get('/new','PageController@new');
+Route::get('/new','PageController@newToken');
 Route::get('/update','PageController@update');
 Route::get('/test/{object?}/{id?}','PageController@test');
 Route::get('/{id?}/objects','PageController@objects');

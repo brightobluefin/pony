@@ -3,11 +3,7 @@
 namespace App\Http\Controllers;
 
 
-use Illuminate\Http\Request;
-
-
 use App\Http\Requests;
-use App\Http\Modules\Connecters;
 use App\Jobs\Sync;
 use Bluefin\YahooGemini\GeminiAuthManager;
 use Bluefin\YahooGemini\Gemini;
@@ -27,29 +23,30 @@ class PageController extends Controller
         ]);
     }
     public function sync($advertiserId,$object){
-      $sourceId = '1499756';
+        $sourceId = '1499756';
 
-      // $gmAuth = new GeminiAuthManager();
-      // $gmAuth->checkTokenExpiry();
-      // $gm = new Gemini($gmAuth->getAccessToken());
-      Artisan::call('command:sync', [
-        'object' => $object,
-        'sourceId' => $sourceId,
-        'advertiserId' => $advertiserId
-      ]);
+        $gmAuth = new GeminiAuthManager();
+        $gmAuth->checkTokenExpiry();
+        $gm = new Gemini($gmAuth->getAccessToken());
+        return $gm->sync($object, $sourceId, $advertiserId);
+//      Artisan::call('command:sync', [
+//        'object' => $object,
+//        'sourceId' => $sourceId,
+//        'advertiserId' => $advertiserId
+//      ]);
 
-      return "Sync completed";
+        return "Sync completed";
     }
-    public function delete($advertiserId, $object, GeminiAuthManager $gmAuth){
-      // $gmAuth->checkTokenExpiry();
-      // $gm = new Gemini($gmAuth->getAccessToken());
-      // $gm->delete($object, $advertiserId);
-      // $gm->sync($object, $sourceId, $advertiserId);
+    public function delete($advertiserId, $object){
+      $gmAuth = new GeminiAuthManager;
+      $gmAuth->checkTokenExpiry();
+      $gm = new Gemini($gmAuth->getAccessToken());
+      return $gm->delete($object, $advertiserId);
 
-      Artisan::call('command:delete', [
-        'object' => $object,
-        'advertiserId' => $advertiserId
-      ]);
+      // Artisan::call('command:delete', [
+      //   'object' => $object,
+      //   'advertiserId' => $advertiserId
+      // ]);
 
       return "All items are deleted";
     }
@@ -59,7 +56,7 @@ class PageController extends Controller
         'id'=>$id
       ]);
     }
-    public function new(GeminiAuthManager $gmAuth) {
+    public function newToken(GeminiAuthManager $gmAuth) {
       $tokens=$gmAuth->newAccessToken('new');
       $gmAuth->saveToken($tokens);
 
@@ -78,12 +75,14 @@ class PageController extends Controller
         "expiry"=>$gmAuth->getExpiry()
       ]);
     }
-    public function test($object='campaign',$advertiserId=1499756) {
-      $gmAuth = new GeminiAuthManager();
-      $gmAuth->checkTokenExpiry();
-      $gm = new Gemini($gmAuth->getAccessToken());
+    public function test($object='campaign',$parameter = '1499756&type') {
+        $gmAuth = new GeminiAuthManager();
+        $gmAuth->checkTokenExpiry();
+        $gm = new Gemini($gmAuth->getAccessToken());
 
-      $items = $gm->getData($object, $advertiserId);
+        if($object != 'keyword') $parameter = "?advertiserId=".$parameter;
+
+        $items = $gm->getData($object, $parameter);
 
       return '<pre>'.print_r($items, true).'</pre>';
     }
