@@ -36,7 +36,18 @@ class PageController extends Controller
       $cn->checkTokenExpiry();
       $client = new Client();
       $parameter="?advertiserId=".$id;
-      $items=$cn->getRequest($client,$object,$parameter);
+      if($object =='keyword')
+      {
+        $parentItems = $cn->getRequest($client,'adgoup',$parameter);
+        foreach ($parentItems as $item) {
+          $items =array_merge($items,$cn->getRequest($client,'adgoup',$parameter.'&parentType=ADGROUP&parentId='.$item->id));
+        }
+      }
+      else
+       {
+        $items=$cn->getRequest($client,$object,$parameter);
+      }
+
       return $cn->deleteRequest($client,$object,$items);
     }
     public function objects($id,Connecters $cn){
