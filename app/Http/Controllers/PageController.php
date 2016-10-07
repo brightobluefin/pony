@@ -4,17 +4,15 @@ namespace App\Http\Controllers;
 
 
 use App\Http\Requests;
-use App\Jobs\Sync;
 use Bluefin\YahooGemini\GeminiAuthManager;
 use Bluefin\YahooGemini\Gemini;
 use Artisan;
 
 class PageController extends Controller
 {
-    //
     public function home(){
       $gmAuth = new GeminiAuthManager();
-      $gmAuth->checkTokenExpiry();
+      $gmAuth->checkTokens();
       $gm = new Gemini($gmAuth->getAccessToken());
 
         return view('default', [
@@ -24,11 +22,8 @@ class PageController extends Controller
     }
     public function sync($advertiserId,$object){
         $sourceId = '1499756';
-
-        $gmAuth = new GeminiAuthManager();
-        $gmAuth->checkTokenExpiry();
-        $gm = new Gemini($gmAuth->getAccessToken());
-        return $gm->sync($object, $sourceId, $advertiserId);
+        $gm = new Gemini();
+        $gm->sync($object, $sourceId, $advertiserId);
 //      Artisan::call('command:sync', [
 //        'object' => $object,
 //        'sourceId' => $sourceId,
@@ -37,19 +32,7 @@ class PageController extends Controller
 
         return "Sync completed";
     }
-    public function delete($advertiserId, $object){
-      $gmAuth = new GeminiAuthManager;
-      $gmAuth->checkTokenExpiry();
-      $gm = new Gemini($gmAuth->getAccessToken());
-      return $gm->delete($object, $advertiserId);
 
-      // Artisan::call('command:delete', [
-      //   'object' => $object,
-      //   'advertiserId' => $advertiserId
-      // ]);
-
-      return "All items are deleted";
-    }
     public function objects($id){
       return view('objects',[
         'title' => 'Objects',
@@ -75,15 +58,27 @@ class PageController extends Controller
         "expiry"=>$gmAuth->getExpiry()
       ]);
     }
-    public function test($object='campaign',$parameter = '1499756&type') {
-        $gmAuth = new GeminiAuthManager();
-        $gmAuth->checkTokenExpiry();
-        $gm = new Gemini($gmAuth->getAccessToken());
-
-        if($object != 'keyword') $parameter = "?advertiserId=".$parameter;
+    public function test($object='campaign',$parameter = '1499756') {
+        $gm = new Gemini();
 
         $items = $gm->getData($object, $parameter);
 
       return '<pre>'.print_r($items, true).'</pre>';
+    }
+    public function apiTest($object='currency',$param = '')
+    {
+      $us = urlencode('United States');
+      // $param = '/?type=country';
+      $uri ='https://api.admanager.yahoo.com/v1/rest/dictionary/'.$object.$param;
+      $gm = new Gemini();
+
+      $items = $gm->getApiResponse($object, $uri);
+
+      return '<pre>'.print_r($items, true).'</pre>';
+    }
+    public function delete($object = 'keyword', $parameter = '1494860')
+    {
+      $gm = new Gemini();
+      return $gm->deletekeyword($object, $parameter);
     }
 }

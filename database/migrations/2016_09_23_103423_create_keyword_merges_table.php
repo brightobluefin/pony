@@ -15,10 +15,10 @@ class CreateKeywordMergesTable extends Migration
     {
         Schema::create('keyword_merges', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('adwords_id');
-            $table->integer('gemini_id');
-            $table->integer('advertiser_id');
-            $table->integer('adgroup_gemini_id');
+            $table->string('adwords_id');
+            $table->string('gemini_id');
+            $table->string('advertiser_id');
+            $table->string('adgroup_gemini_id');
             $table->timestamps();
         });
     }
