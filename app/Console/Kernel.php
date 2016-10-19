@@ -14,7 +14,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         //
-      //  Commands\sync::class
+//        Commands\sync::class,
+        Commands\Delete::class
     ];
 
     /**

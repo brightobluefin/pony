@@ -58,27 +58,35 @@ class PageController extends Controller
         "expiry"=>$gmAuth->getExpiry()
       ]);
     }
-    public function test($object='campaign',$parameter = '1499756') {
+    public function test($object='campaign',$parameter = '1494860') {
         $gm = new Gemini();
 
         $items = $gm->getData($object, $parameter);
 
       return '<pre>'.print_r($items, true).'</pre>';
     }
-    public function apiTest($object='currency',$param = '')
+    public function apiTest($object='',$param = '')
     {
-      $us = urlencode('United States');
-      // $param = '/?type=country';
-      $uri ='https://api.admanager.yahoo.com/v1/rest/dictionary/'.$object.$param;
-      $gm = new Gemini();
+        //$us = urlencode('United States');
+        // $param = '/?type=country';
+        $uri ='https://api.gemini.yahoo.com/v2/rest/reports/custom';
+        $gm = new Gemini();
+        $reports = $gm->makeReportRequest($object, $uri);
+//      $items = $gm->getApiResponse($object, $uri);
 
-      $items = $gm->getApiResponse($object, $uri);
-
-      return '<pre>'.print_r($items, true).'</pre>';
+        return '<pre>'.print_r($reports, true).'</pre>';
     }
-    public function delete($object = 'keyword', $parameter = '1494860')
+    public function status($token, $id = '1494860')
+    {
+        $uri ='https://api.gemini.yahoo.com/v2/rest/reports/custom/' . $token . '?advertiserId=' . $id;
+        $gm = new Gemini();
+        $reports = $gm->getReports('advertiser', $uri);
+        return '<pre>'.print_r($reports, true).'</pre>';
+
+    }
+    public function delete($id = '1494860', $object = 'keyword')
     {
       $gm = new Gemini();
-      return $gm->deletekeyword($object, $parameter);
+      return $gm->delete($object, $id);
     }
 }
