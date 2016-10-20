@@ -33,9 +33,10 @@ class PageController extends Controller
         return "Sync completed";
     }
 
-    public function objects($id){
+    public function objects($id, $name){
       return view('objects',[
         'title' => 'Objects',
+        'accountName' => $name,
         'id'=>$id
       ]);
     }
@@ -86,7 +87,8 @@ class PageController extends Controller
     }
     public function delete($id = '1494860', $object = 'keyword')
     {
-      $gm = new Gemini();
-      return $gm->delete($object, $id);
+        $gm = new Gemini();
+        $status = $gm->delete($object, $id);
+        return empty($status)?'Nothing to delete':$status;
     }
 }
