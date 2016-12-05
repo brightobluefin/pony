@@ -22,9 +22,9 @@
               <a href="/test/keyword/{{$id}}" class="btn btn-default pull-right">View </a>
               <a href="/{{$id}}/keyword/delete" onclick="return confirm('Are you sure you want to Delete?')" class="btn btn-default pull-right">Delete </a>
             </li>
-            <li class="list-group-item">Ad Extension
-                <a href="/test/adextension/{{$id}}" class="btn btn-default pull-right">View </a>
-                <a href="/{{$id}}/adextension/delete" onclick="return confirm('Are you sure you want to Delete?')" class="btn btn-default pull-right">Delete </a>
+            <li class="list-group-item">Ad Sitelink
+                <a href="/test/sharedsitelink/{{$id}}" class="btn btn-default pull-right">View </a>
+                <a href="/{{$id}}/sharedsitelink/delete" onclick="return confirm('Are you sure you want to Delete?')" class="btn btn-default pull-right">Delete </a>
             </li>
         <ul>
     <div>

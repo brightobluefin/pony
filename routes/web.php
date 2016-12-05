@@ -20,6 +20,8 @@ Route::get('/update','PageController@update');
 Route::get('/test/{object?}/{id?}','PageController@test');
 Route::get('/api/{object?}/{param?}','PageController@apiTest');
 Route::get('/status/{token?}/{id?}','PageController@status');
+Route::get('/download/{token?}','PageController@downloadBulk');
+
 Route::get('/{id?}/{name?}/objects','PageController@objects');
 Route::get('/{id?}/{object?}/sync','PageController@sync');
 Route::get('/{id?}/{object?}/delete','PageController@delete');

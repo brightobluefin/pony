@@ -66,24 +66,45 @@ class PageController extends Controller
 
       return '<pre>'.print_r($items, true).'</pre>';
     }
-    public function apiTest($object='',$param = '')
+    public function apiTest($object='',$param = '1494860')
     {
         //$us = urlencode('United States');
-        // $param = '/?type=country';
-        $uri ='https://api.gemini.yahoo.com/v2/rest/reports/custom';
+//         $param = '/?type=country';
         $gm = new Gemini();
-        $reports = $gm->makeReportRequest($object, $uri);
-//      $items = $gm->getApiResponse($object, $uri);
 
+        /** Reports */
+        $uri = 'https://api.gemini.yahoo.com/v2/rest/reports/custom';
+        $reports = $gm->makeReportRequest($object, $uri);
         return '<pre>'.print_r($reports, true).'</pre>';
+        /** Report ends */
+
+        /** Bulk */
+//        $uri ='https://api.gemini.yahoo.com/v2/rest/bulk/download';
+//      $items = $gm->getApiResponse($object, $uri);
+//        $bulk = $gm->makeBulkDownloadRequest($object, $uri, $param);
+//        return '<pre>'.print_r($bulk, true).'</pre>';
+        /** Bulk ends */
     }
     public function status($token, $id = '1494860')
     {
-        $uri ='https://api.gemini.yahoo.com/v2/rest/reports/custom/' . $token . '?advertiserId=' . $id;
         $gm = new Gemini();
+        /** Reports */
+//        $uri ='https://api.gemini.yahoo.com/v2/rest/bulk/status/?jobId=' . $token . '&advertiserId=' . $id;
+//        $bulk = $gm->getBulkReports('advertiser', $uri);
+//        return '<pre>'.print_r($bulk, true).'</pre>';
+        /** Report ends */
+
+        /** Bulk */
+        $uri ='https://api.gemini.yahoo.com/v2/rest/reports/custom/' . $token . '?advertiserId=' . $id;
         $reports = $gm->getReports('advertiser', $uri);
         return '<pre>'.print_r($reports, true).'</pre>';
-
+        /** Bulk ends */
+    }
+    public function downloadBulk($token){
+        $uri ='https://api.gemini.yahoo.com/v2/rest/bulk/read/?resource=' . $token;
+        $gm = new Gemini();
+        $bulk = $gm->downloadBulk('advertiser', $uri);
+        return $bulk;
     }
     public function delete($id = '1494860', $object = 'keyword')
     {
