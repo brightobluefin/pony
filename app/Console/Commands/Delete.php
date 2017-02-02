@@ -12,7 +12,7 @@ class Delete extends Command
      *
      * @var string
      */
-    protected $signature = 'command:delete {object} {id=1494860}';
+    protected $signature = 'pony:delete {object} {id=1494860}';
 
     /**
      * The console command description.
