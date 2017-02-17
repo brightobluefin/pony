@@ -1,0 +1,5 @@
+<?php
+return [
+    'CONSUMER_KEY' => env('GEMINI_CONSUMER_KEY'),
+    'CONSUMER_SECRET' => env('GEMINI_CONSUMER_SECRET')
+];
