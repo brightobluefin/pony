@@ -6,10 +6,19 @@ namespace App\Http\Controllers;
 use App\Http\Requests;
 use Bluefin\YahooGemini\GeminiAuthManager;
 use Bluefin\YahooGemini\Gemini;
-use Artisan;
+use GuzzleHttp\Client;
+use Illuminate\Http\Request;
 
-class PageController extends Controller
-{
+class PageController extends Controller {
+    protected $apiUrl;
+
+    const PRODUCTION_URL = 'https://api.gemini.yahoo.com/v2/rest/';
+    const SAND_BOX_URL = 'https://sandbox-api.gemini.yahoo.com/v2/rest/';
+
+    public function __construct() {
+        $this->apiUrl = (\app()->environment() == 'production') ? self::PRODUCTION_URL : self::SAND_BOX_URL;
+    }
+
     public function home(){
       $gmAuth = new GeminiAuthManager();
       $gmAuth->checkTokens();
@@ -20,6 +29,7 @@ class PageController extends Controller
           'title' => 'Home Page'
         ]);
     }
+
     public function sync($advertiserId,$object){
         $sourceId = '1499756';
         $gm = new Gemini();
@@ -40,6 +50,7 @@ class PageController extends Controller
         'id'=>$id
       ]);
     }
+
     public function newToken(GeminiAuthManager $gmAuth) {
       $tokens=$gmAuth->newAccessToken('new');
       $gmAuth->saveToken($tokens);
@@ -49,6 +60,47 @@ class PageController extends Controller
         "expiry"=>$gmAuth->getExpiry()
       ]);
     }
+
+    public function newAccount(){
+        return view('new-account', [
+            'title' => 'New Account'
+        ]);
+    }
+
+    public function saveAccount(Request $request){
+        $gmAuth = new GeminiAuthManager();
+        $gmAuth->checkTokens();
+        $accessToken = $gmAuth->getAccessToken();
+
+        $client = new Client();
+        $client->request('POST', self::SAND_BOX_URL.'advertisersignup', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $accessToken
+            ],
+            'json' => [
+                'advertiserName' => trim($request->input('account-name'))
+            ]
+        ]);
+
+        return redirect('/');
+    }
+    
+
+    public function deleteAccount($id){
+        $gmAuth = new GeminiAuthManager();
+        $gmAuth->checkTokens();
+        $accessToken = $gmAuth->getAccessToken();
+
+        $client = new Client();
+        $client->request('DELETE', self::SAND_BOX_URL.'advertiser/'.$id, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $accessToken
+            ],
+        ]);
+
+        return redirect('/');
+    }
+
     public function update(GeminiAuthManager $gmAuth)
     {
       $tokens = $gmAuth->updateAccessToken();
@@ -66,8 +118,8 @@ class PageController extends Controller
 
       return '<pre>'.print_r($items, true).'</pre>';
     }
-    public function apiTest($object='',$param = '1494860')
-    {
+
+    public function apiTest($object='',$param = '1494860') {
         //$us = urlencode('United States');
 //         $param = '/?type=country';
         $gm = new Gemini();
@@ -85,8 +137,8 @@ class PageController extends Controller
 //        return '<pre>'.print_r($bulk, true).'</pre>';
         /** Bulk ends */
     }
-    public function status($token, $id = '1494860')
-    {
+
+    public function status($token, $id = '1494860') {
         $gm = new Gemini();
         /** Reports */
 //        $uri ='https://api.gemini.yahoo.com/v2/rest/bulk/status/?jobId=' . $token . '&advertiserId=' . $id;
@@ -95,11 +147,12 @@ class PageController extends Controller
         /** Report ends */
 
         /** Bulk */
-        $uri ='https://api.gemini.yahoo.com/v2/rest/reports/custom/' . $token . '?advertiserId=' . $id;
+        $uri = $this->apiUrl . 'reports/custom/' . $token . '?advertiserId=' . $id;
         $reports = $gm->getReports('advertiser', $uri);
         return '<pre>'.print_r($reports, true).'</pre>';
         /** Bulk ends */
     }
+
     public function downloadBulk($token){
         $uri ='https://api.gemini.yahoo.com/v2/rest/bulk/read/?resource=' . $token;
         $gm = new Gemini();
